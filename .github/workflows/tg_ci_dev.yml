@@ -37,14 +37,14 @@ jobs:
      - name: Terragrunt Plan
        id: plan
        if: github.event_name == 'pull_request'
-       run: terragrunt run-all plan --terragrunt-non-interactive -input=false
        continue-on-error: true
+       run: terragrunt run-all plan --terragrunt-non-interactive -input=false
 
      - name: Update Pull Request
        uses: actions/github-script@v6
        if: github.event_name == 'pull_request'
-       env:
-         PLAN: "terragrunt\n${{ steps.plan.outputs.stdout }}"
+         #env:
+         #PLAN: ${{ steps.plan.stdout }}
        with:
          github-token: ${{ secrets.GITHUB_TOKEN }}
          script: |
@@ -55,7 +55,7 @@ jobs:
            <details><summary>Show Plan</summary>
 
            \`\`\`\n
-           ${process.env.PLAN}
+           \`${{ steps.plan.output.stdout }}\`
            \`\`\`
 
            </details>
