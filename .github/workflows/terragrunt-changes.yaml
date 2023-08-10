@@ -17,7 +17,7 @@ jobs:
       bool_dev: ${{ steps.filter.outputs.dev }}
       bool_qa: ${{ steps.filter.outputs.qa }}
       bool_prod: ${{ steps.filter.outputs.prod }}
-      path_dev: ${{ steps.filter.outputs.changes.dev }}
+      files_dev: ${{ steps.filter.outputs.dev_files }}
 
 
     steps:
@@ -25,7 +25,7 @@ jobs:
         id: filter
         uses: dorny/paths-filter@v2
         with:
-          list-files: 'json'
+          list-files: 'shell'
           filters: |
             dev:
               - added|deleted|modified: 'non-prod/*/dev/**'
@@ -41,7 +41,7 @@ jobs:
     if: needs.changes.outputs.bool_dev == 'true'
     uses: ./.github/workflows/terragrunt-ci.yml
     with: 
-      tg-wd: ${{ needs.changes.outputs.path_dev }}
+      tg-wd: ${{ needs.changes.outputs.files_dev }}
     secrets: inherit
 
 #  tg_ci_qa:
