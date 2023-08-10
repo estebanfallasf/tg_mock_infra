@@ -1,18 +1,23 @@
-name: "Terragrunt CI - DEV"
+name: "Terragrunt CI"
 
 on:
   workflow_call:
+    inputs:
+      tg-wd:
+        description: 'Working directory for running TG commands'
+        type: string
+        default: './'
 
 jobs:
   tg_plan:
-    name: "Terragrunt_CI"
+    name: "Terragrunt_Plan"
     runs-on: ubuntu-latest
     outputs:
       PLN_OUT:  ${{ steps.plan.outputs.stdout }}
     container: alpine/terragrunt:1.3.9
     defaults:
       run:
-        working-directory: ./non-prod/us-east-2/dev/ 
+        working-directory: ${{ inputs.tg-wd }}
 
     steps:
      - name: Checkout
@@ -88,7 +93,7 @@ jobs:
     container: alpine/terragrunt:1.3.9
     defaults:
       run:
-        working-directory: ./non-prod/us-east-2/dev/ 
+        working-directory: ${{ inputs.tg-wd }}
 
     steps:
      - name: Checkout
