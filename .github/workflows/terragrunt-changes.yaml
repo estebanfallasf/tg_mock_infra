@@ -1,0 +1,58 @@
+name: "Terragrunt code changes"
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+permissions:
+  pull-requests: write
+
+jobs:
+  changes:
+    name: "Determine code changes and related paths"
+    runs-on: ubuntu-latest
+    outputs:
+      bool_dev: ${{ steps.filter.outputs.dev }}
+      bool_qa: ${{ steps.filter.outputs.qa }}
+      bool_prod: ${{ steps.filter.outputs.prod }}
+      path_dev: ${{ steps.filter.outputs.changes.dev }}
+
+
+    steps:
+      - name: Determine working directory for TG commands
+        id: filter
+        uses: dorny/paths-filter@v2
+        with:
+          list-files: 'json'
+          filters: |
+            dev:
+              - added|deleted|modified: 'non-prod/*/dev/**'
+            qa:
+              - added|deleted|modified: 'non-prod/*/qa/**'
+            prod:
+              - added|deleted|modified: 'prod/*/prod/**'
+
+      - run: echo ${{ steps.filter.outputs.changes }}
+                
+  tg_ci_dev:
+    needs: changes
+    if: needs.changes.outputs.bool_dev == 'true'
+    uses: ./.github/workflows/terragrunt-ci.yml
+    with: 
+      tg-wd: ${{ needs.changes.outputs.path_dev }}
+    secrets: inherit
+
+#  tg_ci_qa:
+#    needs: setup_terragrunt
+#    if: needs.setup_terragrunt.outputs.wd_qa == 'true'
+#    uses: ./.github/workflows/tg_ci_qa.yml
+#    secrets: inherit
+#
+#  tg_ci_prod:
+#    needs: setup_terragrunt
+#    if: needs.setup_terragrunt.outputs.wd_prod == 'true'
+#    uses: ./.github/workflows/tg_ci_prod.yml
+#    secrets: inherit
+
