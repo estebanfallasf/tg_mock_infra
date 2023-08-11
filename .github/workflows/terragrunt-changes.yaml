@@ -11,14 +11,25 @@ permissions:
 
 jobs:
   changes:
+    strategy: 
+      matrix: 
+        include:
+          - tg_env: "dev"
+            tg_filter: "non-prod/*/dev/**"
+          - tg_env: "qa"
+            tg_filter: "non-prod/*/qa/**"
+          - tg_env: "prod"
+            tg_filter: "prod/*/prod/**"
     name: "Determine code changes and related paths"
     runs-on: ubuntu-latest
     outputs:
-      bool_dev: ${{ steps.filter.outputs.dev }}
-      bool_qa: ${{ steps.filter.outputs.qa }}
-      bool_prod: ${{ steps.filter.outputs.prod }}
-      files_dev: ${{ steps.filter.outputs.dev_files }}
-      paths_dev: ${{ steps.path.outputs.dev_paths}}
+      tg_changes: ${{ steps.filter.outputs.matrix.tg_env }}
+      tg_paths: ${{ steps.path.outputs.paths}}
+#      bool_dev: ${{ steps.filter.outputs.dev }}
+#      bool_qa: ${{ steps.filter.outputs.qa }}
+ #     bool_prod: ${{ steps.filter.outputs.prod }}
+ #     files_dev: ${{ steps.filter.outputs.dev_files }}
+ #     paths_dev: ${{ steps.path.outputs.dev_paths}}
 
 
     steps:
@@ -28,28 +39,29 @@ jobs:
         with:
           list-files: 'shell'
           filters: |
-            dev:
-              - added|deleted|modified: 'non-prod/*/dev/**'
-            qa:
-              - added|deleted|modified: 'non-prod/*/qa/**'
-            prod:
-              - added|deleted|modified: 'prod/*/prod/**'
+            ${{ matrix.tg_env }}:
+              - added|deleted|modified: "${{ matrix.tg_filter }}"
+           # qa:
+           #   - added|deleted|modified: 'non-prod/*/qa/**'
+            #prod:
+            # - added|deleted|modified: 'prod/*/prod/**'
 
       - run: echo ${{ steps.filter.outputs.changes }}
       
       - name: Get paths from changes files
         id: path
         run: |
-          PATHS=$(echo "${{ steps.filter.outputs.dev_files }}" | grep terragrunt.hcl | sed 's/terragrunt.hcl//g') 
-          echo "dev_paths=$PATHS" >> $GITHUB_OUTPUT
+          ENV="${{ matrix.tg_env }}"
+          PATHS=$(echo "${{ steps.filter.outputs.${ENV}_files }}" | grep terragrunt.hcl | sed 's/terragrunt.hcl//g') 
+          echo "tg_paths=$PATHS" >> $GITHUB_OUTPUT
 
                 
   tg_ci_dev:
     needs: changes
-    if: needs.changes.outputs.bool_dev == 'true'
+    if: needs.changes.outputs.tg_changes == 'true'
     uses: ./.github/workflows/terragrunt-ci.yml
     with: 
-      tg-wd: ${{ needs.changes.outputs.paths_dev }}
+      tg-wd: ${{ needs.changes.outputs.tg_paths }}
     secrets: inherit
 
 #  tg_ci_qa:
