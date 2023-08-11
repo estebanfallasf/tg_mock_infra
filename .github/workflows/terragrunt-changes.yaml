@@ -1,0 +1,88 @@
+name: "Terragrunt code changes"
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+permissions:
+  pull-requests: write
+
+jobs:
+  changes:
+   # strategy: 
+   #   matrix: 
+   #     include:
+   #       - tg_env: "dev"
+   #         tg_filter: "non-prod/*/dev/**"
+         # - tg_env: "qa"
+         #   tg_filter: "non-prod/*/qa/**"
+         # - tg_env: "prod"
+         #   tg_filter: "prod/*/prod/**"
+    name: "Determine code changes and related paths"
+    runs-on: ubuntu-latest
+    outputs:
+      tg_changes: ${{ steps.filter.outputs.src }}
+      tg_paths: ${{ steps.path.outputs.paths }}
+#      bool_dev: ${{ steps.filter.outputs.dev }}
+#      bool_qa: ${{ steps.filter.outputs.qa }}
+ #     bool_prod: ${{ steps.filter.outputs.prod }}
+ #     files_dev: ${{ steps.filter.outputs.dev_files }}
+ #     paths_dev: ${{ steps.path.outputs.dev_paths}}
+
+
+    steps:
+      - name: Determine working directory for TG commands
+        id: filter
+        uses: dorny/paths-filter@v2
+        with:
+          list-files: 'json'
+          filters: |
+            src:
+              - added|deleted|modified: '*prod/*/*/**'
+           # qa:
+           #   - added|deleted|modified: 'non-prod/*/qa/**'
+            #prod:
+            # - added|deleted|modified: 'prod/*/prod/**'
+
+      - run: echo ${{ steps.filter.outputs.changes }}
+      - run: echo ${{ steps.filter.outputs.src_files }}
+      
+      - name: Get paths 
+        id: path
+        run: |
+         PATHS=$(echo "${{ steps.filter.outputs.src_files }}" | grep terragrunt.hcl | sed 's/terragrunt.hcl//g') 
+         export PATHS
+         echo $PATHS
+         echo "paths=\"$PATHS\"\]" >> $GITHUB_OUTPUT
+
+     #     elif [[ "${{ matrix.tg_env }}" == "qa" && "${{ steps.filter.outputs.qa }}" == "true" ]]; then
+     #       PATHS=$(echo "${{ steps.filter.outputs.qa_files }}" | grep terragrunt.hcl | sed 's/terragrunt.hcl//g') 
+     #       export PATHS
+     #       echo "paths=$PATHS" >> $GITHUB_OUTPUT
+     #     fi
+
+  terragrunt-ci:
+    needs: changes
+    strategy:
+      matrix:
+        tg_ci: ${{ needs.changes.outputs.tg_paths }}
+  #      tg_ci: ["non-prod/us-east-2/dev"]
+    uses: ./.github/workflows/terragrunt-ci.yml
+    with: 
+      tg-wd: ${{ matrix.tg_ci }}
+    secrets: inherit
+
+#  tg_ci_qa:
+#    needs: setup_terragrunt
+#    if: needs.setup_terragrunt.outputs.wd_qa == 'true'
+#    uses: ./.github/workflows/tg_ci_qa.yml
+#    secrets: inherit
+#
+#  tg_ci_prod:
+#    needs: setup_terragrunt
+#    if: needs.setup_terragrunt.outputs.wd_prod == 'true'
+#    uses: ./.github/workflows/tg_ci_prod.yml
+#    secrets: inherit
+

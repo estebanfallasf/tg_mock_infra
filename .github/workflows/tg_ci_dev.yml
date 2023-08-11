@@ -1,0 +1,107 @@
+name: "Terragrunt CI - DEV"
+
+on:
+  workflow_call:
+
+jobs:
+  tg_plan:
+    name: "Terragrunt_CI"
+    runs-on: ubuntu-latest
+    outputs:
+      PLN_OUT:  ${{ steps.plan.outputs.stdout }}
+    container: alpine/terragrunt:1.3.9
+    defaults:
+      run:
+        working-directory: ./non-prod/us-east-2/dev/ 
+
+    steps:
+     - name: Checkout
+       uses: actions/checkout@v3
+
+     - name: Configure AWS Credentials
+       id: configure-aws
+       uses: aws-actions/configure-aws-credentials@v1
+       with:
+         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+         aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+
+     - name: Terragrunt HCLFormat
+       id: hclfmt
+       run: terragrunt hclfmt --terragrunt-check
+
+     - name: Terragrunt Validate Inputs
+       id: validate
+       run: terragrunt validate-inputs
+
+     - name: Terragrunt Plan
+       id: plan
+       if: github.event_name == 'pull_request'
+       continue-on-error: true
+       run: terragrunt run-all plan --terragrunt-non-interactive -input=false
+
+     - name: Terragrunt Plan Status
+       if: steps.plan.outcome == 'failure'
+       run: exit 1
+
+  update_pr:
+    name: "Update PR"
+    runs-on: ubuntu-latest
+    needs: tg_plan
+    permissions:
+      pull-requests: write
+        
+    steps:
+     - name: Update Pull Request
+       uses: actions/github-script@v6
+       if: github.event_name == 'pull_request'
+       env:
+         PLAN: "terraform\n${{ needs.tg_plan.outputs.PLN_OUT}}"
+       with:
+         github-token: ${{ secrets.GITHUB_TOKEN }}
+         script: |
+           const output = `#### Terragrunt Format and Style 🖌\`${{ steps.hclfmt.outcome }}\`
+           #### Terragrunt Validation 🤖\`${{ steps.validate.outcome }}\`
+           #### Terragrunt Plan 📖\`${{ steps.plan.outcome }}\`
+
+           <details><summary>Show Plan</summary>
+
+           \`\`\`\n
+           ${process.env.PLAN}
+           \`\`\`
+           </details>
+
+           *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+
+           github.rest.issues.createComment({
+             issue_number: context.issue.number,
+             owner: context.repo.owner,
+             repo: context.repo.repo,
+             body: output
+           })
+
+ 
+  tg_apply:
+    name: "Terragrunt_apply"
+    needs: update_pr
+    runs-on: ubuntu-latest
+    container: alpine/terragrunt:1.3.9
+    defaults:
+      run:
+        working-directory: ./non-prod/us-east-2/dev/ 
+
+    steps:
+     - name: Checkout
+       uses: actions/checkout@v3
+
+     - name: Configure AWS Credentials
+       id: configure-aws
+       uses: aws-actions/configure-aws-credentials@v1
+       with:
+         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+         aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+
+     - name: Terragrunt Apply
+       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+       run: terragrunt run-all apply --terragrunt-non-interactive -input=false

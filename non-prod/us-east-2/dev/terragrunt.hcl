@@ -3,7 +3,7 @@ include "root" {
 }
 
 locals {
-  instance_name = "DEVELOPMENT"
+  instance_name = "DEVELOPMENT-01"
 }
 
 # Indicate where to source the terraform module from.
