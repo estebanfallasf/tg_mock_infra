@@ -60,15 +60,13 @@ jobs:
             echo "tg_paths=$PATHS" >> $GITHUB_OUTPUT
           fi
 
-
-                
-  tg_ci_dev:
-    needs: changes
-    if: needs.changes.outputs.tg_changes == 'true'
-    uses: ./.github/workflows/terragrunt-ci.yml
-    with: 
-      tg-wd: ${{ needs.changes.outputs.tg_paths }}
-    secrets: inherit
+      - name: terragrunt-ci
+        #needs: changes
+        if: ${{ steps.filter.outputs.matrix.tg_env }}
+        uses: ./.github/workflows/terragrunt-ci.yml
+        with: 
+           tg-wd: ${{ steps.path.outputs.tg_paths }}
+       # secrets: inherit
 
 #  tg_ci_qa:
 #    needs: setup_terragrunt
