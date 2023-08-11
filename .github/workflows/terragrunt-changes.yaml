@@ -37,7 +37,7 @@ jobs:
         id: filter
         uses: dorny/paths-filter@v2
         with:
-          list-files: 'shell'
+          list-files: 'json'
           filters: |
             src:
               - added|deleted|modified: '*prod/*/*/**'
@@ -54,7 +54,7 @@ jobs:
          PATHS=$(echo "${{ steps.filter.outputs.src_files }}" | grep terragrunt.hcl | sed 's/terragrunt.hcl//g') 
          export PATHS
          echo $PATHS
-         echo "paths=\"$PATHS\"" >> $GITHUB_OUTPUT
+         echo "paths=\[\"$PATHS\"\]" >> $GITHUB_OUTPUT
 
      #     elif [[ "${{ matrix.tg_env }}" == "qa" && "${{ steps.filter.outputs.qa }}" == "true" ]]; then
      #       PATHS=$(echo "${{ steps.filter.outputs.qa_files }}" | grep terragrunt.hcl | sed 's/terragrunt.hcl//g') 
@@ -66,8 +66,8 @@ jobs:
     needs: changes
     strategy:
       matrix:
-  #      tg_ci: ${{ needs.changes.outputs.tg_paths }}
-        tg_ci: ["non-prod/us-east-2/dev"]
+        tg_ci: ${{ needs.changes.outputs.tg_paths }}
+  #      tg_ci: ["non-prod/us-east-2/dev"]
     uses: ./.github/workflows/terragrunt-ci.yml
     with: 
       tg-wd: ${{ matrix.tg_ci }}
