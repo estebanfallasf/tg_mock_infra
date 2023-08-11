@@ -23,8 +23,8 @@ jobs:
     name: "Determine code changes and related paths"
     runs-on: ubuntu-latest
     outputs:
-      tg_changes: ${{ steps.filter.outputs.src}}
-      tg_paths: ${{ steps.path.outputs.paths}}
+      tg_changes: ${{ steps.filter.outputs.src }}
+      tg_paths: ${{ steps.path.outputs.paths }}
 #      bool_dev: ${{ steps.filter.outputs.dev }}
 #      bool_qa: ${{ steps.filter.outputs.qa }}
  #     bool_prod: ${{ steps.filter.outputs.prod }}
@@ -51,7 +51,7 @@ jobs:
       - name: Get paths 
         id: path
         run: |
-         PATHS=$(echo "${{ steps.filter.outputs.changes }}" | grep terragrunt.hcl | sed 's/terragrunt.hcl//g') 
+         PATHS=$(echo "${{ steps.filter.outputs.src_files }}" | grep terragrunt.hcl | sed 's/terragrunt.hcl//g') 
          export PATHS
          echo $PATHS
          echo "paths=$PATHS" >> $GITHUB_OUTPUT
@@ -66,7 +66,7 @@ jobs:
     needs: changes
     strategy:
       matrix:
-        tg_ci: ${{ fromJson(needs.changes.outputs.tg_paths) }}
+        tg_ci: ${{ needs.changes.outputs.tg_paths }}
     uses: ./.github/workflows/terragrunt-ci.yml
     with: 
       tg-wd: ${{ matrix.tg_ci }}
