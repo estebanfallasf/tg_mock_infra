@@ -54,7 +54,7 @@ jobs:
          PATHS=$(echo "${{ steps.filter.outputs.src_files }}" | grep terragrunt.hcl | sed 's/terragrunt.hcl//g') 
          export PATHS
          echo $PATHS
-         echo "paths=$PATHS" >> $GITHUB_OUTPUT
+         echo "paths=\"$PATHS\"" >> $GITHUB_OUTPUT
 
      #     elif [[ "${{ matrix.tg_env }}" == "qa" && "${{ steps.filter.outputs.qa }}" == "true" ]]; then
      #       PATHS=$(echo "${{ steps.filter.outputs.qa_files }}" | grep terragrunt.hcl | sed 's/terragrunt.hcl//g') 
