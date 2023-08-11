@@ -11,11 +11,11 @@ permissions:
 
 jobs:
   changes:
-    strategy: 
-      matrix: 
-        include:
-          - tg_env: "dev"
-            tg_filter: "non-prod/*/dev/**"
+   # strategy: 
+   #   matrix: 
+   #     include:
+   #       - tg_env: "dev"
+   #         tg_filter: "non-prod/*/dev/**"
          # - tg_env: "qa"
          #   tg_filter: "non-prod/*/qa/**"
          # - tg_env: "prod"
@@ -23,7 +23,7 @@ jobs:
     name: "Determine code changes and related paths"
     runs-on: ubuntu-latest
     outputs:
-      tg_changes: ${{ steps.filter.outputs.matrix.tg_env }}
+      tg_changes: ${{ steps.filter.outputs.src}}
       tg_paths: ${{ steps.path.outputs.paths}}
 #      bool_dev: ${{ steps.filter.outputs.dev }}
 #      bool_qa: ${{ steps.filter.outputs.qa }}
@@ -39,8 +39,8 @@ jobs:
         with:
           list-files: 'json'
           filters: |
-            ${{ matrix.tg_env }}:
-              - added|deleted|modified: "${{ matrix.tg_filter }}"
+            src:
+              - added|deleted|modified: '*prod/*/*/**'
            # qa:
            #   - added|deleted|modified: 'non-prod/*/qa/**'
             #prod:
@@ -51,15 +51,14 @@ jobs:
       - name: Get paths 
         id: path
         run: |
-          if [[ "${{ matrix.tg_env }}" == "dev" && "${{ steps.filter.outputs.dev }}" == "true" ]]; then
-            PATHS=$(echo "${{ steps.filter.outputs.dev_files }}" | grep terragrunt.hcl | sed 's/terragrunt.hcl//g') 
-            export PATHS
-            echo "paths=$PATHS" >> $GITHUB_OUTPUT
-          elif [[ "${{ matrix.tg_env }}" == "qa" && "${{ steps.filter.outputs.qa }}" == "true" ]]; then
-            PATHS=$(echo "${{ steps.filter.outputs.qa_files }}" | grep terragrunt.hcl | sed 's/terragrunt.hcl//g') 
-            export PATHS
-            echo "paths=$PATHS" >> $GITHUB_OUTPUT
-          fi
+         PATHS=$(echo "${{ steps.filter.outputs.src_files }}" | grep terragrunt.hcl | sed 's/terragrunt.hcl//g') 
+         export PATHS
+         echo "paths=$PATHS" >> $GITHUB_OUTPUT
+     #     elif [[ "${{ matrix.tg_env }}" == "qa" && "${{ steps.filter.outputs.qa }}" == "true" ]]; then
+     #       PATHS=$(echo "${{ steps.filter.outputs.qa_files }}" | grep terragrunt.hcl | sed 's/terragrunt.hcl//g') 
+     #       export PATHS
+     #       echo "paths=$PATHS" >> $GITHUB_OUTPUT
+     #     fi
 
   terragrunt-ci:
     needs: changes
