@@ -16,10 +16,10 @@ jobs:
         include:
           - tg_env: "dev"
             tg_filter: "non-prod/*/dev/**"
-          - tg_env: "qa"
-            tg_filter: "non-prod/*/qa/**"
-          - tg_env: "prod"
-            tg_filter: "prod/*/prod/**"
+         # - tg_env: "qa"
+         #   tg_filter: "non-prod/*/qa/**"
+         # - tg_env: "prod"
+         #   tg_filter: "prod/*/prod/**"
     name: "Determine code changes and related paths"
     runs-on: ubuntu-latest
     outputs:
