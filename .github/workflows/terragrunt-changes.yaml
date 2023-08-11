@@ -47,7 +47,6 @@ jobs:
             # - added|deleted|modified: 'prod/*/prod/**'
 
       - run: echo ${{ steps.filter.outputs.changes }}
-      - run: echo ${{ steps.filter.outputs.files }}
       
       - name: Get paths 
         id: path
@@ -62,7 +61,7 @@ jobs:
 
       - name: terragrunt-ci
         #needs: changes
-        if: ${{ steps.filter.outputs.matrix.tg_env }}
+        if: steps.filter.outputs.${{ matrix.tg_env }}
         uses: ./.github/workflows/terragrunt-ci.yml
         with: 
            tg-wd: ${{ steps.path.outputs.tg_paths }}
