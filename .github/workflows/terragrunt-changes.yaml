@@ -47,12 +47,19 @@ jobs:
             # - added|deleted|modified: 'prod/*/prod/**'
 
       - run: echo ${{ steps.filter.outputs.changes }}
+      - run: echo ${{ steps.filter.outputs.files }}
       
-      - name: Get paths from changes files
+      - name: Get paths 
         id: path
         run: |
-          PATHS=$(echo "${{ steps.filter.outputs.matrix.tg_env_files }}" | grep terragrunt.hcl | sed 's/terragrunt.hcl//g') 
-          echo "tg_paths=$PATHS" >> $GITHUB_OUTPUT
+          if [[ ${{ matrix.tg_env }} == "dev" && ${{ steps.filter.outputs.dev }} == "true" ]]; then
+            PATHS=$(echo "${{ steps.filter.outputs.dev_files }}" | grep terragrunt.hcl | sed 's/terragrunt.hcl//g') 
+            echo "tg_paths=$PATHS" >> $GITHUB_OUTPUT
+          elif [[ ${{ matrix.tg_env }} == "qa" && ${{ steps.filter.outputs.qa }} == "true" ]]; then
+            PATHS=$(echo "${{ steps.filter.outputs.qa_files }}" | grep terragrunt.hcl | sed 's/terragrunt.hcl//g') 
+            echo "tg_paths=$PATHS" >> $GITHUB_OUTPUT
+          fi
+
 
                 
   tg_ci_dev:
