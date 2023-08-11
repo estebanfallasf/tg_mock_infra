@@ -18,6 +18,7 @@ jobs:
       bool_qa: ${{ steps.filter.outputs.qa }}
       bool_prod: ${{ steps.filter.outputs.prod }}
       files_dev: ${{ steps.filter.outputs.dev_files }}
+      paths_dev: ${{ steps.path.outputs.dev_paths}}
 
 
     steps:
@@ -25,7 +26,7 @@ jobs:
         id: filter
         uses: dorny/paths-filter@v2
         with:
-          list-files: 'shell'
+          list-files: 'json'
           filters: |
             dev:
               - added|deleted|modified: 'non-prod/*/dev/**'
@@ -35,13 +36,20 @@ jobs:
               - added|deleted|modified: 'prod/*/prod/**'
 
       - run: echo ${{ steps.filter.outputs.changes }}
+      
+      - name: Get paths from changes files
+        id: path
+        run: |
+          PATHS=$(echo "${{ steps.filter.outputs.dev_files }}" | grep terragrunt.hcl | sed 's/terragrunt.hcl//g') 
+          echo "dev_paths=$PATHS" >> $GITHUB_OUTPUT
+
                 
   tg_ci_dev:
     needs: changes
     if: needs.changes.outputs.bool_dev == 'true'
     uses: ./.github/workflows/terragrunt-ci.yml
     with: 
-      tg-wd: ${{ needs.changes.outputs.files_dev }}
+      tg-wd: ${{ needs.changes.outputs.paths_dev }}
     secrets: inherit
 
 #  tg_ci_qa:
