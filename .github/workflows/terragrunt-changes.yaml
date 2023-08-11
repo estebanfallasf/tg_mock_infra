@@ -53,9 +53,11 @@ jobs:
         run: |
           if [[ "${{ matrix.tg_env }}" == "dev" && "${{ steps.filter.outputs.dev }}" == "true" ]]; then
             PATHS=$(echo "${{ steps.filter.outputs.dev_files }}" | grep terragrunt.hcl | sed 's/terragrunt.hcl//g') 
+            export PATHS
             echo "tg_paths=$PATHS" >> $GITHUB_OUTPUT
           elif [[ "${{ matrix.tg_env }}" == "qa" && "${{ steps.filter.outputs.qa }}" == "true" ]]; then
             PATHS=$(echo "${{ steps.filter.outputs.qa_files }}" | grep terragrunt.hcl | sed 's/terragrunt.hcl//g') 
+            export PATHS
             echo "tg_paths=$PATHS" >> $GITHUB_OUTPUT
           fi
 
