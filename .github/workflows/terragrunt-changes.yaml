@@ -51,8 +51,7 @@ jobs:
       - name: Get paths from changes files
         id: path
         run: |
-          ENV="${{ matrix.tg_env }}"
-          PATHS=$(echo "${{ steps.filter.outputs.${ENV}_files }}" | grep terragrunt.hcl | sed 's/terragrunt.hcl//g') 
+          PATHS=$(echo "${{ steps.filter.outputs.changes }}" | grep terragrunt.hcl | sed 's/terragrunt.hcl//g') 
           echo "tg_paths=$PATHS" >> $GITHUB_OUTPUT
 
                 
