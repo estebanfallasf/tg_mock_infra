@@ -37,7 +37,7 @@ jobs:
         id: filter
         uses: dorny/paths-filter@v2
         with:
-          list-files: 'shell'
+          list-files: 'json'
           filters: |
             ${{ matrix.tg_env }}:
               - added|deleted|modified: "${{ matrix.tg_filter }}"
@@ -59,13 +59,15 @@ jobs:
             echo "tg_paths=$PATHS" >> $GITHUB_OUTPUT
           fi
 
-      - name: terragrunt-ci
-        #needs: changes
-        if: steps.filter.outputs.${{ matrix.tg_env }}
-        uses: ./.github/workflows/terragrunt-ci.yml
-        with: 
-           tg-wd: ${{ steps.path.outputs.tg_paths }}
-       # secrets: inherit
+  terragrunt-ci:
+    needs: changes
+    strategy:
+      matrix:
+        tg_ci: ${{ fromJson(needs.changes.outputs.tg_paths) }}
+    uses: ./.github/workflows/terragrunt-ci.yml
+    with: 
+      tg-wd: ${{ matrix.tg_ci }}
+    secrets: inherit
 
 #  tg_ci_qa:
 #    needs: setup_terragrunt
