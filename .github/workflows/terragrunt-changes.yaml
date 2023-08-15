@@ -1,0 +1,55 @@
+name: "Terragrunt code changes"
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+permissions:
+  pull-requests: write
+
+jobs:
+  changes:
+    name: "Determine code changes and related paths"
+    runs-on: ubuntu-latest
+    outputs:
+        # Expose matched filters as job 'packages' output variable
+      packages: ${{ steps.filter.outputs.changes }}
+      directories: ${{ steps.transform.outputs.directories }}
+
+    steps:
+      - name: Determine working directory for TG commands
+        id: filter
+        uses: dorny/paths-filter@v2
+        with:
+          list-files: 'shell'
+          filters: |
+            src:
+              - added|deleted|modified: 'non-prod/*/**'
+              - added|deleted|modified: 'prod/*/**'
+
+      - run: echo ${{ steps.filter.outputs.changes }}
+      - run: echo ${{ steps.filter.outputs.src_files }}
+      
+      - name: transform to directories
+        id: transform
+        continue-on-error: false
+        run: |
+          folders=()
+          for f in ${{ steps.filter.outputs.src_files }}; do \
+            echo "Adding $(dirname $f) to folders"; \
+            folders+=($(dirname $f)); \
+          done
+          unique_folders=($(printf "%s\n" "${folders[@]}" | sort -u | tr '\n' ' '))
+          echo "directories=$(jq --compact-output --null-input '$ARGS.positional' --args -- ${unique_folders[@]})" >> $GITHUB_OUTPUT
+
+  terragrunt-ci:
+    needs: changes
+    strategy:
+      matrix:
+        directory: ${{ fromJSON(needs.changes.outputs.directories) }}
+    uses: ./.github/workflows/terragrunt-ci.yml
+    with: 
+      tg-wd: ${{ matrix.directory }}
+    secrets: inherit

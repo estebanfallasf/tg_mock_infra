@@ -1,14 +1,16 @@
+# this is test
+
 remote_state {
-  backend = "s3" 
+  backend = "s3"
   generate = {
-    path = "backend.tf" 
+    path      = "backend.tf"
     if_exists = "overwrite_terragrunt"
   }
   config = {
     bucket         = "tf-ejf-terraform-state"
     key            = "${path_relative_to_include()}/appserver.tfstate"
     region         = "us-east-2"
-encrypt = true
+    encrypt        = true
     dynamodb_table = "ejf-terraform-state-table"
   }
 }
