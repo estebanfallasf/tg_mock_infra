@@ -26,7 +26,7 @@ jobs:
           list-files: 'shell'
           filters: |
             src:
-              - added|deleted|modified: '*prod/*/*/**'
+              - added|deleted|modified: './*/**'
 
       - run: echo ${{ steps.filter.outputs.changes }}
       - run: echo ${{ steps.filter.outputs.src_files }}
